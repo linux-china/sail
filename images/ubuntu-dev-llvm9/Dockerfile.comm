@@ -1,0 +1,27 @@
+# Based Upon:
+# https://github.com/d11wtq/llvm-docker
+#
+# Modifications:
+#
+# - Use LLVM 9 instead of LLVM 3.9.
+# - Change the signing key URL.
+# - Merge `apt-get install` steps into the prior `apt-get update` step.
+# - Check for file already existing when creating symlinks.
+
+FROM %BASE
+
+RUN apt-get update -qq -y && \
+    apt-get install -qq -y wget
+
+# Ubuntu Cosmic LLVM APT repository: http://apt.llvm.org
+RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+ADD llvm-9.list /etc/apt/sources.list.d/llvm-9.list
+
+RUN apt-get update -qq -y && apt-get install  -y  libllvm-9-ocaml-dev libllvm9 llvm-9 llvm-9-dev llvm-9-doc llvm-9-examples llvm-9-runtime \
+     clang-9 clang-tools-9 clang-9-doc libclang-common-9-dev libclang-9-dev libclang1-9 clang-format-9 python-clang-9 clangd-9 \
+     lld-9 libc++-9-dev libc++abi-9-dev libomp-9-dev libfuzzer-9-dev
+
+RUN for f in $(find /usr/bin -name '*-9'); do \
+      newname=`echo $f | sed s/-9//`; \
+      [ ! -f $newname ] && ln -s $f $newname || true; \
+    done
